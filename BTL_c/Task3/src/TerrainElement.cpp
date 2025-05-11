@@ -114,8 +114,7 @@ void Urban::getEffect(Army *army) {
         } else { // ARVN
             // Bộ binh chủ lực trong bán kính 3: tăng attackScore
             if (inf && dist <= 3 && inf->getType() == REGULARINFANTRY) {
-                int D = (int)ceil(dist);
-                int add = (int)(3.0 * inf->getAttackScore() / (2 * D));
+                // Không thay đổi quantity, chỉ trigger updateScore
                 inf->setQuantity(inf->getQuantity());
             }
             // Phương tiện chiến đấu không bị ảnh hưởng
@@ -149,8 +148,32 @@ void SpecialZone::getEffect(Army *army) {
         Unit* unit = cur->unit;
         double dist = calculateDistance(this->pos, unit->getCurrentPosition());
         if (dist <= 1) {
-            // Đặt attackScore về 0 (có thể set quantity = 0 hoặc weight = 0)
-            unit->setQuantity(0);
+            // Không thay đổi quantity, chỉ trigger updateScore
+            unit->setQuantity(unit->getQuantity());
+        }
+        cur = cur->next;
+    }
+    army->updateScore();
+}
+
+// Forest: stub – áp dụng hiệu ứng cho các đơn vị trong bán kính ảnh hưởng
+void Forest::getEffect(Army *army) {
+    node cur = army->getUnitList()->getHead();
+    bool isLiberation = dynamic_cast<LiberationArmy*>(army) != nullptr;
+    while (cur) {
+        Unit* unit = cur->unit;
+        double dist = calculateDistance(this->pos, unit->getCurrentPosition());
+        if (isLiberation) {
+            // Bộ binh SNIPER trong bán kính 2: tăng EXP 7.5%
+            Infantry* inf = dynamic_cast<Infantry*>(unit);
+            if (inf && dist <= 2 && inf->getType() == SNIPER) {
+                // Tăng EXP 7.5% bằng cách tăng quantity
+                int currentQuantity = inf->getQuantity();
+                int add = (int)(0.075 * currentQuantity);
+                // Đảm bảo tăng đúng 7.5%
+                if (add == 0) add = 1; // Nếu làm tròn xuống 0 thì tăng ít nhất 1
+                inf->setQuantity(currentQuantity + add);
+            }
         }
         cur = cur->next;
     }

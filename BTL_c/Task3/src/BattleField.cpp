@@ -20,6 +20,16 @@ BattleField::BattleField(int n_rows, int n_cols,
         }
     }
 
+    // Mountain
+    for (auto posPtr : arrayForest) {
+        int x = posPtr->getRow();
+        int y = posPtr->getCol();
+        if (x >= 0 && x < n_rows && y >= 0 && y < n_cols) {
+            delete terrain[x][y];
+            terrain[x][y] = new Mountain(*posPtr);
+        }
+    }
+
     // River
     for (auto posPtr : arrayRiver) {
         int x = posPtr->getRow();

@@ -43,6 +43,13 @@ public:
     void getEffect(Army *army);
 };
 
+class Forest : public TerrainElement {
+public:
+    Forest(Position pos) : TerrainElement(pos) {}
+    // Rừng: hiệu ứng tăng EXP 7.5% cho bộ binh SNIPER trong bán kính 2 đơn vị
+    void getEffect(Army *army);
+};
+
 class River : public TerrainElement {
 public:
     River(Position pos) : TerrainElement(pos) {}
