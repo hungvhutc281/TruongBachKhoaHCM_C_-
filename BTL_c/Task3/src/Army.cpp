@@ -33,7 +33,7 @@ Army::Army(Unit **unitArray, int size, string name, BattleField* battleField) : 
     if (LF<=0)  LF=0;
     if (EXP<=0)  EXP=0;
     unitList = new UnitList(LF+EXP);
-    unitList->setMaxVehicleTypes(maxVehicleTypes);
+    unitList->setMaxVehicleTypes(100);
     for (int i=0;i<size;i++)
     {
         unitList->insert(unitArray[i]);

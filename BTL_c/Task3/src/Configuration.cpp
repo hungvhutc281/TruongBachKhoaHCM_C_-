@@ -7,16 +7,148 @@ string trim(const string &s) {
     return (start == string::npos) ? "" : s.substr(start, end - start + 1);
 }
 
+vector<string> split(const string& s, char delimiter) {
+    vector<string> tokens;
+    string token;
+    istringstream tokenStream(s);
+    while (getline(tokenStream, token, delimiter)) {
+        tokens.push_back(trim(token));
+    }
+    return tokens;
+}
+
 //!-----------------------------------------------------
 //! CLASS Configuration
 //!-----------------------------------------------------
 Configuration::Configuration(const std::string &filepath) {
+    ifstream fin(filepath);
+    string line;
+    while (getline(fin, line)) {
+        line = trim(line);
+        if (line.empty() || line[0] == '#') continue;
+        if (line.find("NUM_ROWS=") == 0) {
+            num_rows = stoi(line.substr(9));
+        } else if (line.find("NUM_COLS=") == 0) {
+            num_cols = stoi(line.substr(9));
+        } else if (line.find("ARRAY_FOREST=") == 0) {
+            string arr = line.substr(13);
+            arr = arr.substr(1, arr.size() - 2); // remove []
+            for (auto& posStr : split(arr, ',')) {
+                if (!posStr.empty())
+                    arrayForest.push_back(new Position(trim(posStr)));
+            }
+        } else if (line.find("ARRAY_RIVER=") == 0) {
+            string arr = line.substr(12);
+            arr = arr.substr(1, arr.size() - 2);
+            for (auto& posStr : split(arr, ',')) {
+                if (!posStr.empty())
+                    arrayRiver.push_back(new Position(trim(posStr)));
+            }
+        } else if (line.find("ARRAY_FORTIFICATION=") == 0) {
+            string arr = line.substr(21);
+            arr = arr.substr(1, arr.size() - 2);
+            for (auto& posStr : split(arr, ',')) {
+                if (!posStr.empty())
+                    arrayFortification.push_back(new Position(trim(posStr)));
+            }
+        } else if (line.find("ARRAY_URBAN=") == 0) {
+            string arr = line.substr(12);
+            arr = arr.substr(1, arr.size() - 2);
+            for (auto& posStr : split(arr, ',')) {
+                if (!posStr.empty())
+                    arrayUrban.push_back(new Position(trim(posStr)));
+            }
+        } else if (line.find("ARRAY_SPECIAL_ZONE=") == 0) {
+            string arr = line.substr(19);
+            arr = arr.substr(1, arr.size() - 2);
+            for (auto& posStr : split(arr, ',')) {
+                if (!posStr.empty())
+                    arraySpecialZone.push_back(new Position(trim(posStr)));
+            }
+        } else if (line.find("UNIT_LIST=") == 0) {
+            string arr = line.substr(10);
+            arr = arr.substr(1, arr.size() - 2); // remove []
+            vector<string> units;
+            string tmp;
+            int paren = 0;
+            for (char ch : arr) {
+                if (ch == '(') paren++;
+                if (ch == ')') paren--;
+                tmp += ch;
+                if (paren == 0 && !tmp.empty() && tmp.find(')') != string::npos) {
+                    units.push_back(trim(tmp));
+                    tmp.clear();
+                }
+            }
+            for (auto& u : units) {
+                if (u.empty()) continue;
+                size_t l = u.find('(');
+                string type = trim(u.substr(0, l));
+                string params = u.substr(l + 1, u.size() - l - 2); // remove ')'
+                vector<string> vals = split(params, ',');
+                int quantity = stoi(vals[0]);
+                int weight = stoi(vals[1]);
+                Position pos(vals[2]);
+                int armyBelong = stoi(vals[3]);
+                Unit* unit = nullptr;
+                if (type == "TANK") {
+                    unit = new Vehicle(quantity, weight, pos, TANK);
+                } else if (type == "REGULARINFANTRY") {
+                    unit = new Infantry(quantity, weight, pos, REGULARINFANTRY);
+                }
+                // Có thể bổ sung các loại khác nếu cần
+                if (unit) {
+                    if (armyBelong == 0) liberationUnits.push_back(unit);
+                    else ARVNUnits.push_back(unit);
+                }
+            }
+        } else if (line.find("EVENT_CODE=") == 0) {
+            eventCode = stoi(line.substr(11));
+        }
+    }
+    fin.close();
 }
 
 Configuration::~Configuration() {
-    // Giải phóng các đối tượng Position đã được cấp phát
+    for (auto p : arrayForest) delete p;
+    for (auto p : arrayRiver) delete p;
+    for (auto p : arrayFortification) delete p;
+    for (auto p : arrayUrban) delete p;
+    for (auto p : arraySpecialZone) delete p;
+    for (auto u : liberationUnits) delete u;
+    for (auto u : ARVNUnits) delete u;
 }
 
 string Configuration::str() const {
-
+    ostringstream oss;
+    oss << "Configuration[\n";
+    oss << "NUM_ROWS=" << num_rows << "\n";
+    oss << "NUM_COLS=" << num_cols << "\n";
+    auto printArr = [&](const string& name, const vector<Position*>& arr) {
+        oss << name << "=[";
+        for (size_t i = 0; i < arr.size(); ++i) {
+            oss << arr[i]->str();
+            if (i + 1 < arr.size()) oss << ",";
+        }
+        oss << "]\n";
+    };
+    printArr("ARRAY_FOREST", arrayForest);
+    printArr("ARRAY_RIVER", arrayRiver);
+    printArr("ARRAY_FORTIFICATION", arrayFortification);
+    printArr("ARRAY_URBAN", arrayUrban);
+    printArr("ARRAY_SPECIAL_ZONE", arraySpecialZone);
+    oss << "UNIT_LIST=[";
+    auto printUnits = [&](const vector<Unit*>& arr) {
+        for (size_t i = 0; i < arr.size(); ++i) {
+            oss << arr[i]->str();
+            if (i + 1 < arr.size()) oss << ",";
+        }
+    };
+    printUnits(liberationUnits);
+    if (!liberationUnits.empty() && !ARVNUnits.empty()) oss << ",";
+    printUnits(ARVNUnits);
+    oss << "]\n";
+    oss << "EVENT_CODE=" << eventCode << "\n";
+    oss << "]";
+    return oss.str();
 }
