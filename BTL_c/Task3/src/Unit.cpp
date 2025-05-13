@@ -45,3 +45,7 @@ int Unit::safeCeil(double value)
     }
     return static_cast<int>(ceil(value));
 }
+int Unit::setAttackScore(int attackScore)
+{
+return attackScore;
+}

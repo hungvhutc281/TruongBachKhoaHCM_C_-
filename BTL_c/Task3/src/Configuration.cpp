@@ -1,13 +1,15 @@
 #include "Configuration.h"
 
 // * Hint: Bạn có thể thêm hoặc thay thế các phương thức khác để truy cập các thành viên riêng tư nếu cần thiết.
-string trim(const string &s) {
+string trim(const string &s) 
+{
     size_t start = s.find_first_not_of(" \t\r\n");
     size_t end = s.find_last_not_of(" \t\r\n");
     return (start == string::npos) ? "" : s.substr(start, end - start + 1);
 }
 
-vector<string> split(const string& s, char delimiter) {
+vector<string> split(const string& s, char delimiter) 
+{
     vector<string> tokens;
     string token;
     istringstream tokenStream(s);
@@ -109,7 +111,8 @@ Configuration::Configuration(const std::string &filepath) {
     fin.close();
 }
 
-Configuration::~Configuration() {
+Configuration::~Configuration() 
+{
     for (auto p : arrayForest) delete p;
     for (auto p : arrayRiver) delete p;
     for (auto p : arrayFortification) delete p;
@@ -119,36 +122,39 @@ Configuration::~Configuration() {
     for (auto u : ARVNUnits) delete u;
 }
 
-string Configuration::str() const {
-    ostringstream oss;
-    oss << "Configuration[\n";
-    oss << "NUM_ROWS=" << num_rows << "\n";
-    oss << "NUM_COLS=" << num_cols << "\n";
-    auto printArr = [&](const string& name, const vector<Position*>& arr) {
+string Configuration::str() const 
+{
+ostringstream oss;
+    oss << "num_rows=" << num_rows << ",";
+    oss << "num_cols=" << num_cols << ",";
+    auto printArr = [&](const string& name, const vector<Position*>& arr) 
+    {
         oss << name << "=[";
         for (size_t i = 0; i < arr.size(); ++i) {
             oss << arr[i]->str();
             if (i + 1 < arr.size()) oss << ",";
         }
-        oss << "]\n";
+        oss << "],";
     };
-    printArr("ARRAY_FOREST", arrayForest);
-    printArr("ARRAY_RIVER", arrayRiver);
-    printArr("ARRAY_FORTIFICATION", arrayFortification);
-    printArr("ARRAY_URBAN", arrayUrban);
-    printArr("ARRAY_SPECIAL_ZONE", arraySpecialZone);
-    oss << "UNIT_LIST=[";
-    auto printUnits = [&](const vector<Unit*>& arr) {
-        for (size_t i = 0; i < arr.size(); ++i) {
-            oss << arr[i]->str();
-            if (i + 1 < arr.size()) oss << ",";
-        }
-    };
-    printUnits(liberationUnits);
-    if (!liberationUnits.empty() && !ARVNUnits.empty()) oss << ",";
-    printUnits(ARVNUnits);
-    oss << "]\n";
-    oss << "EVENT_CODE=" << eventCode << "\n";
-    oss << "]";
-    return oss.str();
+    printArr("arrayForest", arrayForest);
+    printArr("arrayRiver", arrayRiver);
+    printArr("arrayFortification", arrayFortification);
+    printArr("arrayUrban", arrayUrban);
+    printArr("arraySpecialZone", arraySpecialZone);
+
+    oss << "liberationUnits=[";
+    for (size_t i = 0; i < liberationUnits.size(); ++i) {
+        oss << liberationUnits[i]->str();
+        if (i + 1 < liberationUnits.size()) oss << ",";
+    }
+    oss << "],";
+
+    oss << "ARVNUnits=[";
+    for (size_t i = 0; i < ARVNUnits.size(); ++i) {
+        oss << ARVNUnits[i]->str();
+        if (i + 1 < ARVNUnits.size()) oss << ",";
+    }
+    oss << "],";
+    oss << "eventCode=" << eventCode;
+    return oss.str();   
 }
